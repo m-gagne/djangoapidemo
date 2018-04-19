@@ -77,11 +77,14 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'OPTIONS': {
-            'read_default_file': os.path.join(BASE_DIR, 'mysql.cnf')
+            'read_default_file': '/etc/mysql/my.cnf',
+            'database': 'djangoapi'
         }
     }
 }
 
+
+print(DATABASES)
 
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators
