@@ -105,6 +105,3 @@ venv.bak/
 
 # VS Code
 .vscode/
-
-# MySQL
-mysql.cnf
