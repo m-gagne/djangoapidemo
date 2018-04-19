@@ -12,7 +12,11 @@ Just a testing place for learning Django REST API & Azure AD
 
         sudo apt-get install mysql-server
 
-  1. Setup Database (be sure to change the password below)
+    - *Note* if you are running this under WSL (bash on Windows) you will need to manually start the sql service by running `sudo service mysql start`
+
+1. Setup Database
+
+    - Connect to mysql server `mysql -u root -p` and run the following SQL below, be sure to change the password in the CREATE USER statement.
 
           create database djangoapi;
           CREATE USER 'apiuser'@'localhost' IDENTIFIED BY '<<YOUR_PASSWORD>>';
