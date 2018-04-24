@@ -4,9 +4,9 @@ Just a testing place for learning Django REST API & Azure AD
 
 ## Dev Setup
 
-1. Install Python, dev & mysql tools
+1. Install Python
 
-        sudo apt-get install pipenv python-dev libmysqlclient-dev
+        sudo apt-get install pipenv
 
 1. Install MySQL
 
