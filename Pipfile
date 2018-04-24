@@ -11,6 +11,6 @@ django = "*"
 djangorestframework = "*"
 python-dotenv = "*"
 pytz = "*"
-mysqlclient = "*"
+mysql-connector-python = "*"
 
 [dev-packages]
