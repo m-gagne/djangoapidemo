@@ -4,9 +4,13 @@ verify_ssl = true
 url = "https://pypi.python.org/simple"
 
 [requires]
-python_version = "3.4"
+python_version = "3.5"
 
 [packages]
 django = "*"
+djangorestframework = "*"
+python-dotenv = "*"
+pytz = "*"
+mysqlclient = "*"
 
 [dev-packages]
