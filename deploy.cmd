@@ -119,10 +119,11 @@ IF NOT EXIST "%DEPLOYMENT_TARGET%\env\azure.env.%PYTHON_RUNTIME%.txt" (
 )
 
 :: 4. Install packages
-echo Pip install requirements.
 REM Custom: Ensure current pip is installed
+echo Upgrading to current pip version.
 env\scripts\python -m pip install --upgrade pip
 
+echo Pip install requirements.
 env\scripts\pip install -r requirements.txt
 
 env\scripts\pip install -r requirements.txt
