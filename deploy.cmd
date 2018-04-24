@@ -2,7 +2,7 @@
 
 :: ----------------------
 :: KUDU Deployment Script
-:: Version: 1.0.8
+:: Version: 1.0.17
 :: ----------------------
 
 :: Prerequisites
@@ -49,6 +49,35 @@ IF NOT DEFINED KUDU_SYNC_CMD (
 )
 goto Deployment
 
+:: Utility Functions
+:: -----------------
+
+:SelectPythonVersion
+
+IF DEFINED KUDU_SELECT_PYTHON_VERSION_CMD (
+  call %KUDU_SELECT_PYTHON_VERSION_CMD% "%DEPLOYMENT_SOURCE%" "%DEPLOYMENT_TARGET%" "%DEPLOYMENT_TEMP%"
+  IF !ERRORLEVEL! NEQ 0 goto error
+
+  SET /P PYTHON_RUNTIME=<"%DEPLOYMENT_TEMP%\__PYTHON_RUNTIME.tmp"
+  IF !ERRORLEVEL! NEQ 0 goto error
+
+  SET /P PYTHON_VER=<"%DEPLOYMENT_TEMP%\__PYTHON_VER.tmp"
+  IF !ERRORLEVEL! NEQ 0 goto error
+
+  SET /P PYTHON_EXE=<"%DEPLOYMENT_TEMP%\__PYTHON_EXE.tmp"
+  IF !ERRORLEVEL! NEQ 0 goto error
+
+  SET /P PYTHON_ENV_MODULE=<"%DEPLOYMENT_TEMP%\__PYTHON_ENV_MODULE.tmp"
+  IF !ERRORLEVEL! NEQ 0 goto error
+) ELSE (
+  SET PYTHON_RUNTIME=python-2.7
+  SET PYTHON_VER=2.7
+  SET PYTHON_EXE=%SYSTEMDRIVE%\python27\python.exe
+  SET PYTHON_ENV_MODULE=virtualenv
+)
+
+goto :EOF
+
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Deployment
 :: ----------
@@ -65,14 +94,59 @@ IF /I "%IN_PLACE_DEPLOYMENT%" NEQ "1" (
 IF NOT EXIST "%DEPLOYMENT_TARGET%\requirements.txt" goto postPython
 IF EXIST "%DEPLOYMENT_TARGET%\.skipPythonDeployment" goto postPython
 
-echo Detected requirements.txt. RUNNING CUSTOM DEPLOYMENT
+echo Detected requirements.txt.  You can skip Python specific steps with a .skipPythonDeployment file.
 
-:: 2. Install packages
-echo Pip install requirements.
-D:\home\python362x86\python.exe -m pip install -I setuptools
-D:\home\python362x86\python.exe -m pip install --upgrade -r requirements.txt
+:: 2. Select Python version
+call :SelectPythonVersion
+
+pushd "%DEPLOYMENT_TARGET%"
+
+:: 3. Create virtual environment
+IF NOT EXIST "%DEPLOYMENT_TARGET%\env\azure.env.%PYTHON_RUNTIME%.txt" (
+  IF EXIST "%DEPLOYMENT_TARGET%\env" (
+    echo Deleting incompatible virtual environment.
+    rmdir /q /s "%DEPLOYMENT_TARGET%\env"
+    IF !ERRORLEVEL! NEQ 0 goto error
+  )
+
+  echo Creating %PYTHON_RUNTIME% virtual environment.
+  %PYTHON_EXE% -m %PYTHON_ENV_MODULE% env
+  IF !ERRORLEVEL! NEQ 0 goto error
+
+  copy /y NUL "%DEPLOYMENT_TARGET%\env\azure.env.%PYTHON_RUNTIME%.txt" >NUL
+) ELSE (
+  echo Found compatible virtual environment.
+)
+
+:: 4. Install packages
+env\scripts\pip install -I setuptools
+env\scripts\pip install --upgrade -r requirements.txt
+
 IF !ERRORLEVEL! NEQ 0 goto error
 
+REM Add additional package installation here
+REM -- Example --
+REM env\scripts\easy_install pytz
+REM IF !ERRORLEVEL! NEQ 0 goto error
+
+:: 5. Copy web.config
+IF EXIST "%DEPLOYMENT_SOURCE%\web.%PYTHON_VER%.config" (
+  echo Overwriting web.config with web.%PYTHON_VER%.config
+  copy /y "%DEPLOYMENT_SOURCE%\web.%PYTHON_VER%.config" "%DEPLOYMENT_TARGET%\web.config"
+)
+
+:: 6. Django collectstatic
+IF EXIST "%DEPLOYMENT_TARGET%\manage.py" (
+  IF EXIST "%DEPLOYMENT_TARGET%\env\lib\site-packages\django" (
+    IF NOT EXIST "%DEPLOYMENT_TARGET%\.skipDjango" (
+      echo Collecting Django static files. You can skip Django specific steps with a .skipDjango file.
+      IF NOT EXIST "%DEPLOYMENT_TARGET%\static" (
+        MKDIR "%DEPLOYMENT_TARGET%\static"
+      )
+      env\scripts\python manage.py collectstatic --noinput --clear
+    )
+  )
+)
 
 popd
 
