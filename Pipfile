@@ -12,5 +12,6 @@ djangorestframework = "*"
 python-dotenv = "*"
 pytz = "*"
 mysql-connector-python = "*"
+waitress = "*"
 
 [dev-packages]
